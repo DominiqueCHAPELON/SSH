@@ -1,0 +1,3 @@
+La clé publique doit être au format le plus basique (copier/coller dans un fichier text)
+La clé privé doit être au format ppk pour putty
+La clé privé doit être au format PEM pour Rstudio
