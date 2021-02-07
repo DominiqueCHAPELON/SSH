@@ -1,0 +1,42 @@
+---
+title: "Untitled"
+author: "Dominique CHAPELON"
+date: "06/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ssh)
+session <- ssh_connect("test@localhost",keyfile="C:/99_INSTALLATION/DOCKER/test_3/private_PEM")
+print(session)
+```
+```{r}
+#ssh_key_info()
+```
+
+```{r}
+primary <- 'localhost'
+machineAddresses <- list(
+  list(host=primary,user='connard',ncore=2)
+)
+
+spec <- lapply(machineAddresses,
+               function(machine) {
+                 rep(list(list(host=machine$host,
+                               user=machine$user)),
+                     machine$ncore)
+               })
+spec <- unlist(spec,recursive=FALSE)
+
+parallelCluster <- parallel::makeCluster(type='PSOCK',
+                                         master=primary,
+                                         spec=spec)
+print(parallelCluster)
+## socket cluster with 8 nodes on hosts
+##                   ‘192.168.1.235’, ‘192.168.1.70’
+```
+
