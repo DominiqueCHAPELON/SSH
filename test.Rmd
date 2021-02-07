@@ -11,17 +11,29 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(ssh)
-session <- ssh_connect("test@localhost",keyfile="C:/99_INSTALLATION/DOCKER/test_3/private_PEM")
+
+# ATTENTION il faut ici une clé privée au format PEM
+#chemin <- "C:/99_INSTALLATION/DOCKER/test_3/private_PEM"
+chemin <- "C:/Users/Myrtille/Documents/R/SSH/R_SSH/private_PEM"
+
+session <- ssh_connect("test@192.168.1.17",keyfile=chemin)
 print(session)
+ssh_disconnect(session)
 ```
 ```{r}
 #ssh_key_info()
+
+# :\PuTTY\plink.exe test@192.168.1.17 -i "C:/Users/Myrtille/Documents/R/SSH/R_SSH/private.ppk" Rscript -e rnorm(100) 
 ```
 
 ```{r}
-primary <- 'localhost'
+# ATTENTION il faut ici une clé privée au format PPK
+#chemin <- "C:/99_INSTALLATION/DOCKER/test_3/private.ppk"
+chemin <- "C:/Users/Myrtille/Documents/R/SSH/R_SSH/private.ppk"
+primary <- '192.168.1.17'
+
 machineAddresses <- list(
-  list(host=primary,user='connard',ncore=2)
+  list(host=primary,user='test',ncore=2)
 )
 
 spec <- lapply(machineAddresses,
@@ -32,11 +44,42 @@ spec <- lapply(machineAddresses,
                })
 spec <- unlist(spec,recursive=FALSE)
 
-parallelCluster <- parallel::makeCluster(type='PSOCK',
-                                         master=primary,
-                                         spec=spec)
+#----------------------------------------------------------------------------------------------
+# RESULTAT : KO
+# parallelCluster <- parallel::makeCluster(type='PSOCK',
+#                                          master=primary,
+#                                          spec=spec,
+#                                          rshcmd = c("C:/PuTTY/plink.exe", "-ssh"),
+#                                          rshopts = c("-i", chemin)
+#                                          )
+
+
+# https://github.com/HenrikBengtsson/future/issues/136
+#----------------------------------------------------------------------------------------------
+# Avec la librairie future V1
+# RESULTAT : OK
+library("future")
+workers <- c(primary, primary)
+parallelCluster <-  makeClusterPSOCK(workers,
+                                     user = "test",
+                                     rshcmd = c("C:/PuTTY/plink.exe", "-ssh"),
+                                     rshopts = c("-i", chemin),
+                                     homogeneous = FALSE,
+                                     verbose=TRUE
+                                     )
+parallelCluster <- autoStopCluster(parallelCluster)
 print(parallelCluster)
-## socket cluster with 8 nodes on hosts
-##                   ‘192.168.1.235’, ‘192.168.1.70’
+```
+
+```{r}
+
+```
+
+
+
+```{r}
+# Fermeture custer avec le garbage collector
+rm(list = "parallelCluster")
+gc()
 ```
 
